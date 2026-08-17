@@ -4,7 +4,6 @@ const SESSION_KEY = "focusSession";
 const ALERT_PAGE_URL = browser.runtime.getURL("alert.html");
 
 let previousSession: FocusSession | null = null;
-let awayWindowId: number | undefined;
 let focusStartedWindowId: number | undefined;
 
 browser.storage.onChanged.addListener((changes, areaName) => {
@@ -15,7 +14,6 @@ browser.storage.onChanged.addListener((changes, areaName) => {
 });
 
 browser.windows.onRemoved.addListener((windowId) => {
-  if (windowId === awayWindowId) awayWindowId = undefined;
   if (windowId === focusStartedWindowId) focusStartedWindowId = undefined;
 });
 
@@ -24,11 +22,13 @@ void initialize();
 async function initialize(): Promise<void> {
   const stored = await browser.storage.session.get(SESSION_KEY);
   previousSession = asSession(stored[SESSION_KEY]);
+  await syncActionPopup(previousSession);
 }
 
 async function handleSessionChange(previous: FocusSession | null, next: FocusSession | null): Promise<void> {
+  await syncActionPopup(next);
+
   if (!next) {
-    await closeAwayWindow();
     await closeFocusStartedWindow();
     return;
   }
@@ -36,14 +36,11 @@ async function handleSessionChange(previous: FocusSession | null, next: FocusSes
   if (!previous || previous.generation !== next.generation) {
     await showFocusStartedWindow();
   }
+}
 
-  const enteredAway = next.state === "away" && previous?.state !== "away";
-  if (enteredAway) {
-    await showAwayWindow();
-    return;
-  }
-
-  if (next.state !== "away") await closeAwayWindow();
+async function syncActionPopup(current: FocusSession | null): Promise<void> {
+  const popup = current?.state === "away" ? `${ALERT_PAGE_URL}?mode=away` : "";
+  await browser.action.setPopup({ popup });
 }
 
 async function showFocusStartedWindow(): Promise<void> {
@@ -56,33 +53,6 @@ async function showFocusStartedWindow(): Promise<void> {
     height: 260
   });
   focusStartedWindowId = created.id;
-}
-
-async function showAwayWindow(): Promise<void> {
-  if (awayWindowId !== undefined) {
-    try {
-      await browser.windows.update(awayWindowId, { focused: true });
-      return;
-    } catch {
-      awayWindowId = undefined;
-    }
-  }
-
-  const created = await browser.windows.create({
-    url: `${ALERT_PAGE_URL}?mode=away`,
-    type: "popup",
-    focused: true,
-    width: 380,
-    height: 260
-  });
-  awayWindowId = created.id;
-}
-
-async function closeAwayWindow(): Promise<void> {
-  if (awayWindowId === undefined) return;
-  const windowId = awayWindowId;
-  awayWindowId = undefined;
-  await safeRemoveWindow(windowId);
 }
 
 async function closeFocusStartedWindow(): Promise<void> {
