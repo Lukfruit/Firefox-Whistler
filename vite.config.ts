@@ -12,6 +12,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(import.meta.dirname, "src/background.ts"),
+        focusUi: resolve(import.meta.dirname, "src/focus-ui.ts"),
         content: resolve(import.meta.dirname, "src/content.ts"),
         options: resolve(import.meta.dirname, "src/options.html"),
         alert: resolve(import.meta.dirname, "src/alert.html")
