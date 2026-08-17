@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Whistler",
+  "version": "0.1.2",
+  "description": "Notice when you drift away from the tab or website you intended to focus on.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{3d8f4154-bc6d-4fd8-991d-817b5ae26257}",
+      "strict_min_version": "115.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "incognito": "not_allowed",
+  "permissions": ["alarms", "notifications", "storage"],
+  "host_permissions": ["*://*/*"],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Start focusing with Whistler",
+    "default_icon": {
+      "16": "icons/eye-closed.svg",
+      "32": "icons/eye-closed.svg"
+    }
+  },
+  "icons": {
+    "48": "icons/whistler.svg",
+    "96": "icons/whistler.svg"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
+}

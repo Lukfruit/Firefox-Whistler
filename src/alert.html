@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whistler alert</title>
+  </head>
+  <body>
+    <main class="alert-shell">
+      <div class="alert-mark" aria-hidden="true">
+        <img src="/icons/whistler.svg" width="46" height="46" alt="" />
+      </div>
+      <div class="alert-copy">
+        <p id="eyebrow">Whistler</p>
+        <h1 id="alert-title">Loading…</h1>
+        <p id="alert-message"></p>
+        <p id="focus-page" class="focus-page"></p>
+      </div>
+      <div class="actions">
+        <button id="primary-action" class="primary" type="button">Return</button>
+        <button id="stop-action" class="secondary" type="button">Stop focusing</button>
+      </div>
+    </main>
+    <script type="module" src="/alert.ts"></script>
+  </body>
+</html>

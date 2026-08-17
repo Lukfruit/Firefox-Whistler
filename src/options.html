@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whistler settings</title>
+  </head>
+  <body>
+    <main class="settings-shell">
+      <header class="page-header">
+        <img src="/icons/whistler.svg" width="56" height="56" alt="" />
+        <div>
+          <h1>Whistler</h1>
+          <p>Make drifting noticeable, then get back to what matters.</p>
+        </div>
+      </header>
+
+      <form id="settings-form" novalidate>
+        <section class="card" aria-labelledby="timing-heading">
+          <div class="section-heading">
+            <div>
+              <h2 id="timing-heading">Timing</h2>
+              <p>Choose how long Whistler waits before checking in.</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label class="field">
+              <span>Away grace period</span>
+              <span class="duration-control">
+                <input id="away-value" type="number" min="0" step="1" required />
+                <select id="away-unit" aria-label="Away grace unit">
+                  <option value="1000">seconds</option>
+                  <option value="60000">minutes</option>
+                  <option value="3600000">hours</option>
+                </select>
+              </span>
+              <small>Starts when you leave the tab, site, or Firefox window.</small>
+            </label>
+
+            <label class="field">
+              <span>Inactivity threshold</span>
+              <span class="duration-control">
+                <input id="inactivity-value" type="number" min="0" step="1" required />
+                <select id="inactivity-unit" aria-label="Inactivity threshold unit">
+                  <option value="1000">seconds</option>
+                  <option value="60000">minutes</option>
+                  <option value="3600000">hours</option>
+                </select>
+              </span>
+              <small>Pauses while the focused tab is actively audible.</small>
+            </label>
+
+            <label class="field">
+              <span>Warning lead time</span>
+              <span class="duration-control">
+                <input id="warning-value" type="number" min="0" step="1" required />
+                <select id="warning-unit" aria-label="Warning lead unit">
+                  <option value="1000">seconds</option>
+                  <option value="60000">minutes</option>
+                  <option value="3600000">hours</option>
+                </select>
+              </span>
+              <small>Use zero to skip the “Are you still here?” warning.</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="sound-heading">
+          <div class="section-heading">
+            <div>
+              <h2 id="sound-heading">Sound</h2>
+              <p>Use Whistler’s gentle default or keep a custom sound locally.</p>
+            </div>
+            <button id="test-sound" class="secondary-button" type="button">Test sound</button>
+          </div>
+
+          <fieldset class="sound-choices">
+            <legend class="sr-only">Alert sound</legend>
+            <label class="choice-row">
+              <input id="sound-default" name="sound" type="radio" value="default" />
+              <span><strong>Default whistle</strong><small>Short, clear, and intentionally gentle.</small></span>
+            </label>
+            <label class="choice-row">
+              <input id="sound-custom" name="sound" type="radio" value="custom" />
+              <span><strong>Custom local sound</strong><small id="custom-sound-name">No file selected</small></span>
+            </label>
+          </fieldset>
+
+          <div class="file-actions">
+            <label class="file-button" for="custom-file">Choose audio file</label>
+            <input id="custom-file" class="sr-only" type="file" accept=".mp3,.wav,.ogg,audio/mpeg,audio/wav,audio/ogg" />
+            <button id="remove-sound" class="text-button" type="button">Remove custom sound</button>
+            <span class="help-text">MP3, WAV, or OGG · 10 MiB maximum</span>
+          </div>
+
+          <label class="volume-field" for="volume">
+            <span>Volume <output id="volume-output" for="volume">20%</output></span>
+            <input id="volume" type="range" min="0" max="100" step="1" />
+          </label>
+        </section>
+
+        <section class="card" aria-labelledby="repeat-heading">
+          <div class="section-heading">
+            <div>
+              <h2 id="repeat-heading">Repeat alerts</h2>
+              <p>Keep whistling until you return or stop focusing.</p>
+            </div>
+            <label class="switch">
+              <input id="repeat-enabled" type="checkbox" />
+              <span aria-hidden="true"></span>
+              <b>Repeat</b>
+            </label>
+          </div>
+
+          <fieldset id="repeat-options" class="repeat-options">
+            <legend>Repeat period</legend>
+            <label><input id="repeat-inherit" name="repeat-period-mode" type="radio" value="inherit" /> Inherit the alert threshold</label>
+            <label><input id="repeat-custom" name="repeat-period-mode" type="radio" value="custom" /> Use a custom period</label>
+            <span class="duration-control compact">
+              <input id="repeat-value" type="number" min="0" step="1" aria-label="Custom repeat period" />
+              <select id="repeat-unit" aria-label="Custom repeat period unit">
+                <option value="1000">seconds</option>
+                <option value="60000">minutes</option>
+                <option value="3600000">hours</option>
+              </select>
+            </span>
+          </fieldset>
+        </section>
+
+        <div class="form-status" aria-live="polite">
+          <span id="error-message" role="alert"></span>
+          <span id="save-status">Settings are saved automatically.</span>
+        </div>
+      </form>
+
+      <footer>Local-only · No account · No analytics</footer>
+    </main>
+    <script type="module" src="/options.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "whistler-firefox",
+  "version": "0.1.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:sound": "node scripts/generate-default-sound.mjs",
+    "dev": "npm run generate:sound && vite build --watch",
+    "build": "npm run generate:sound && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:extension": "web-ext lint --source-dir dist",
+    "package": "npm run build && web-ext build --source-dir dist --artifacts-dir web-ext-artifacts --overwrite-dest",
+    "verify": "npm run typecheck && npm test && npm run build && npm run lint:extension"
+  },
+  "dependencies": {
+    "tldts": "^7.0.13"
+  },
+  "devDependencies": {
+    "@types/firefox-webext-browser": "^120.0.4",
+    "fake-indexeddb": "^6.2.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.2",
+    "vitest": "^3.2.4",
+    "web-ext": "^10.6.0"
+  }
+}
