@@ -62,6 +62,10 @@ export function inactivityDeadlines(settings: WhistlerSettings, lastActivityAt: 
   };
 }
 
+export function awayAlertAt(settings: WhistlerSettings, stateStartedAt: number): number {
+  return stateStartedAt + settings.inactivityThresholdMs;
+}
+
 export function repeatDelay(settings: WhistlerSettings, _reason: AlertReason): number | null {
   if (!settings.repeatEnabled) return null;
   return settings.repeatPeriodMs ?? settings.inactivityThresholdMs;
