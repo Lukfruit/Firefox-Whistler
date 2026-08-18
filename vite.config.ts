@@ -14,7 +14,8 @@ export default defineConfig({
         background: resolve(import.meta.dirname, "src/background.ts"),
         content: resolve(import.meta.dirname, "src/content.ts"),
         options: resolve(import.meta.dirname, "src/options.html"),
-        alert: resolve(import.meta.dirname, "src/alert.html")
+        alert: resolve(import.meta.dirname, "src/alert.html"),
+        toolbar: resolve(import.meta.dirname, "src/toolbar.html")
       },
       output: {
         entryFileNames: "[name].js",
