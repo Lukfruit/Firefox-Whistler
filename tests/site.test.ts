@@ -24,8 +24,9 @@ describe("focus site matching", () => {
     (url) => expect(getFocusSite(url)).toBeNull()
   );
 
-  it("provides a safe display fallback", () => {
+  it("provides a clean display host and safe fallback", () => {
     expect(displayHost("https://learn.example.com/path", "example.com")).toBe("learn.example.com");
-    expect(displayHost("broken", "example.com")).toBe("example.com");
+    expect(displayHost("https://www.example.com/path", "www.example.com")).toBe("example.com");
+    expect(displayHost("broken", "www.example.com")).toBe("example.com");
   });
 });
