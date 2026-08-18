@@ -17,10 +17,14 @@ const ALERT_NOTIFICATION_ID = "whistler-alert";
 const CLOSED_NOTIFICATION_ID = "whistler-tab-closed";
 const UNSUPPORTED_NOTIFICATION_ID = "whistler-unsupported";
 const ALERT_PAGE_URL = browser.runtime.getURL("alert.html");
+const AWAY_POPUP_URL = `${ALERT_PAGE_URL}?mode=away`;
+const FOCUS_START_POPUP_URL = `${ALERT_PAGE_URL}?mode=focus-start`;
+const FOCUS_START_POPUP_MS = 1000;
 
 let session: FocusSession | null = null;
 let settings: WhistlerSettings;
 let initialization: Promise<void> | null = null;
+let focusStartPopupGeneration: string | null = null;
 
 void initialize();
 
@@ -164,8 +168,27 @@ async function toggleFocus(tabId?: number): Promise<void> {
     audible: tab.audible === true,
     muted: tab.mutedInfo?.muted === true
   };
+
+  await showFocusStartedPopup(session.generation);
   await persistAndPublish();
   await reconfigureTimers();
+}
+
+async function showFocusStartedPopup(generation: string): Promise<void> {
+  focusStartPopupGeneration = generation;
+  await setToolbarState();
+
+  try {
+    await browser.action.openPopup();
+  } catch {
+    // Firefox can reject this if the initiating user gesture is no longer active.
+  }
+
+  setTimeout(() => {
+    if (focusStartPopupGeneration !== generation) return;
+    focusStartPopupGeneration = null;
+    void setToolbarState();
+  }, FOCUS_START_POPUP_MS);
 }
 
 async function handleTrackedTabUpdate(
@@ -428,6 +451,7 @@ async function stopFocusing(): Promise<void> {
   if (!session) return;
   const actionWindowId = session.actionWindowId;
   session = null;
+  focusStartPopupGeneration = null;
   await clearWhistlerAlarms();
   await browser.notifications.clear(ALERT_NOTIFICATION_ID);
   await browser.notifications.clear(CLOSED_NOTIFICATION_ID);
@@ -479,6 +503,13 @@ async function setToolbarState(): Promise<void> {
   await browser.action.setTitle({
     title: session ? `Stop focusing on ${session.focusSite}` : "Start focusing with Whistler"
   });
+
+  const popup = session && focusStartPopupGeneration === session.generation
+    ? FOCUS_START_POPUP_URL
+    : session?.state === "away"
+      ? AWAY_POPUP_URL
+      : "";
+  await browser.action.setPopup({ popup });
 }
 
 async function broadcast(message: RuntimeBroadcast): Promise<void> {
