@@ -10,8 +10,6 @@ import {
 import type { AlertSound, WhistlerSettings } from "./types";
 
 const form = element<HTMLFormElement>("settings-form");
-const awayValue = element<HTMLInputElement>("away-value");
-const awayUnit = element<HTMLSelectElement>("away-unit");
 const inactivityValue = element<HTMLInputElement>("inactivity-value");
 const inactivityUnit = element<HTMLSelectElement>("inactivity-unit");
 const warningValue = element<HTMLInputElement>("warning-value");
@@ -61,7 +59,6 @@ testSoundButton.addEventListener("click", () => {
 
 async function restore(): Promise<void> {
   const [settings, custom] = await Promise.all([getSettings(), getCustomSound()]);
-  setDuration(awayValue, awayUnit, settings.awayGraceMs);
   setDuration(inactivityValue, inactivityUnit, settings.inactivityThresholdMs);
   setDuration(warningValue, warningUnit, settings.warningLeadMs);
   volume.value = String(Math.round(settings.volume * 100));
@@ -125,7 +122,7 @@ async function persistForm(): Promise<WhistlerSettings | null> {
 function readForm(): WhistlerSettings {
   const useCustom = soundCustom.checked && selectedSound.kind === "custom";
   return {
-    awayGraceMs: readDuration(awayValue, awayUnit),
+    awayGraceMs: 0,
     inactivityThresholdMs: readDuration(inactivityValue, inactivityUnit),
     warningLeadMs: readDuration(warningValue, warningUnit),
     sound: useCustom ? selectedSound : { kind: "default" },
