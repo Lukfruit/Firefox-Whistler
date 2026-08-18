@@ -16,12 +16,12 @@
   "permissions": ["alarms", "notifications", "storage"],
   "host_permissions": ["*://*/*"],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["background.js", "popupState.js"],
     "type": "module"
   },
   "action": {
     "default_title": "Start focusing with Whistler",
-    "default_popup": "toolbar.html",
+    "default_popup": "focus-start.html",
     "default_icon": {
       "16": "icons/eye-closed.svg",
       "32": "icons/eye-closed.svg"
