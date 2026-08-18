@@ -62,9 +62,9 @@ export function inactivityDeadlines(settings: WhistlerSettings, lastActivityAt: 
   };
 }
 
-export function repeatDelay(settings: WhistlerSettings, reason: AlertReason): number | null {
+export function repeatDelay(settings: WhistlerSettings, _reason: AlertReason): number | null {
   if (!settings.repeatEnabled) return null;
-  return settings.repeatPeriodMs ?? (reason === "away" ? settings.awayGraceMs : settings.inactivityThresholdMs);
+  return settings.repeatPeriodMs ?? settings.inactivityThresholdMs;
 }
 
 function tracking(session: FocusSession, now: number): FocusSession {
