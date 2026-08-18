@@ -17,8 +17,12 @@ export function matchesFocusSite(rawUrl: string, focusSite: string): boolean {
 
 export function displayHost(rawUrl: string, fallback: string): string {
   try {
-    return new URL(rawUrl).hostname;
+    return stripWww(new URL(rawUrl).hostname);
   } catch {
-    return fallback;
+    return stripWww(fallback);
   }
+}
+
+function stripWww(hostname: string): string {
+  return hostname.replace(/^www\./i, "");
 }
