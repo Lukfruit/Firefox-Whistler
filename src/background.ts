@@ -1,6 +1,6 @@
 import { getSettings } from "./core/settings";
 import { displayHost, getFocusSite, matchesFocusSite } from "./core/site";
-import { inactivityDeadlines, repeatDelay, transition } from "./core/state-machine";
+import { awayAlertAt, inactivityDeadlines, repeatDelay, transition } from "./core/state-machine";
 import type {
   AlertReason,
   FocusSession,
@@ -17,10 +17,12 @@ const ALERT_NOTIFICATION_ID = "whistler-alert";
 const CLOSED_NOTIFICATION_ID = "whistler-tab-closed";
 const UNSUPPORTED_NOTIFICATION_ID = "whistler-unsupported";
 const ALERT_PAGE_URL = browser.runtime.getURL("alert.html");
+const TOOLBAR_PORT_NAME = "whistler-toolbar";
 
 let session: FocusSession | null = null;
 let settings: WhistlerSettings;
 let initialization: Promise<void> | null = null;
+let toolbarInteractionCount = 0;
 
 void initialize();
 
@@ -66,6 +68,15 @@ browser.notifications.onClicked.addListener((notificationId) => {
 browser.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "local" || !changes.settings) return;
   void reloadSettings();
+});
+
+browser.runtime.onConnect.addListener((port) => {
+  if (port.name !== TOOLBAR_PORT_NAME) return;
+  toolbarInteractionCount += 1;
+  port.onDisconnect.addListener(() => {
+    toolbarInteractionCount = Math.max(0, toolbarInteractionCount - 1);
+    if (toolbarInteractionCount === 0) void reconcileFocusContext();
+  });
 });
 
 browser.runtime.onMessage.addListener((message: RuntimeRequest, sender) => {
@@ -204,7 +215,7 @@ async function handleActivity(): Promise<void> {
 
 async function handleWindowFocusChanged(windowId: number): Promise<void> {
   await initialize();
-  if (!session) return;
+  if (!session || toolbarInteractionCount > 0) return;
   if (windowId !== browser.windows.WINDOW_ID_NONE && await isWhistlerWindow(windowId)) return;
   await reconcileFocusContext();
 }
@@ -301,7 +312,7 @@ async function reconfigureTimers(): Promise<void> {
   }
 
   if (session.state === "away") {
-    const alertAt = session.stateStartedAt + settings.awayGraceMs;
+    const alertAt = awayAlertAt(settings, session.stateStartedAt);
     if (alertAt <= now) await dispatch({ type: "ALERT_DUE", now, reason: "away" });
     else await createAlarm("away", alertAt);
     return;

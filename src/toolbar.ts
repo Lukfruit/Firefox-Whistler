@@ -2,6 +2,13 @@ import "./alert.css";
 import { displayHost } from "./core/site";
 import type { FocusSession, RuntimeBroadcast, RuntimeRequest, StateSnapshot } from "./types";
 
+const TOOLBAR_PORT_NAME = "whistler-toolbar";
+const toolbarPort = browser.runtime.connect({ name: TOOLBAR_PORT_NAME });
+
+window.addEventListener("pagehide", () => {
+  toolbarPort.disconnect();
+}, { once: true });
+
 const title = element<HTMLElement>("toolbar-title");
 const message = element<HTMLElement>("toolbar-message");
 const focusPage = element<HTMLElement>("focus-page");
