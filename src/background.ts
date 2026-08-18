@@ -28,10 +28,6 @@ browser.runtime.onInstalled.addListener(() => {
   void ensureSettingsStored();
 });
 
-browser.action.onClicked.addListener((tab) => {
-  void toggleFocus(tab.id);
-});
-
 browser.tabs.onActivated.addListener(() => {
   void reconcileFocusContext();
 });
@@ -80,6 +76,8 @@ browser.runtime.onMessage.addListener((message: RuntimeRequest, sender) => {
     case "presence:yes":
       void confirmPresence();
       return undefined;
+    case "focus:start":
+      return startFocusingCurrentTab();
     case "focus:return":
       void returnToFocus();
       return undefined;
@@ -123,13 +121,14 @@ async function ensureSettingsStored(): Promise<void> {
   if (!stored.settings) await browser.storage.local.set({ settings: await getSettings() });
 }
 
-async function toggleFocus(tabId?: number): Promise<void> {
+async function startFocusingCurrentTab(): Promise<void> {
   await initialize();
-  if (session) {
-    await stopFocusing();
-    return;
-  }
+  if (session) return;
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  await startFocusing(tab?.id);
+}
 
+async function startFocusing(tabId?: number): Promise<void> {
   if (tabId === undefined) return;
   const tab = await safeGetTab(tabId);
   if (!tab) return;
