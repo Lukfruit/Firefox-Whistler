@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS } from "../src/core/settings";
-import { inactivityDeadlines, repeatDelay, transition } from "../src/core/state-machine";
+import { awayAlertAt, inactivityDeadlines, repeatDelay, transition } from "../src/core/state-machine";
 import type { FocusSession } from "../src/types";
 
 const START = 1_000_000;
@@ -80,6 +80,11 @@ describe("deadlines", () => {
       alertAt: START + 300_000
     });
     expect(inactivityDeadlines({ ...DEFAULT_SETTINGS, warningLeadMs: 0 }, START).warningAt).toBeNull();
+  });
+
+  it("uses the inactivity threshold after leaving the focus context", () => {
+    expect(awayAlertAt(DEFAULT_SETTINGS, START)).toBe(START + 300_000);
+    expect(awayAlertAt({ ...DEFAULT_SETTINGS, awayGraceMs: 0, inactivityThresholdMs: 42_000 }, START)).toBe(START + 42_000);
   });
 
   it("uses the default custom repeat period", () => {
