@@ -49,6 +49,7 @@ export type SessionEvent =
 export type RuntimeRequest =
   | { type: "activity" }
   | { type: "presence:yes" }
+  | { type: "focus:start" }
   | { type: "focus:return" }
   | { type: "focus:stop" }
   | { type: "focus:reopen" }
