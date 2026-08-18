@@ -9,6 +9,9 @@ const actions = element<HTMLElement>("toolbar-actions");
 const primaryAction = element<HTMLButtonElement>("primary-action");
 const stopAction = element<HTMLButtonElement>("stop-action");
 
+const FOCUS_CONFIRMATION_MS = 2000;
+const FOCUS_FADE_MS = 450;
+
 let session: FocusSession | null = null;
 let view: "starting" | "away" | null = null;
 
@@ -42,7 +45,7 @@ async function initialize(): Promise<void> {
 
     view = "starting";
     renderFocusStarted(session);
-    window.setTimeout(() => window.close(), 1000);
+    scheduleFocusConfirmationClose();
     return;
   }
 
@@ -63,6 +66,7 @@ async function getSnapshot(): Promise<StateSnapshot> {
 
 function renderFocusStarted(current: FocusSession): void {
   document.title = "Focusing — Whistler";
+  document.body.classList.add("focus-confirmation");
   message.hidden = true;
   focusPage.hidden = true;
   actions.hidden = true;
@@ -72,7 +76,27 @@ function renderFocusStarted(current: FocusSession): void {
   );
 }
 
+function scheduleFocusConfirmationClose(): void {
+  const fadeDelay = FOCUS_CONFIRMATION_MS - FOCUS_FADE_MS;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!prefersReducedMotion) {
+    document.body.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      {
+        duration: FOCUS_FADE_MS,
+        delay: fadeDelay,
+        fill: "forwards",
+        easing: "ease-out"
+      }
+    );
+  }
+
+  window.setTimeout(() => window.close(), FOCUS_CONFIRMATION_MS);
+}
+
 function renderAway(current: FocusSession): void {
+  document.body.classList.remove("focus-confirmation");
   document.title = "Return to your focus site — Whistler";
   message.hidden = false;
   focusPage.hidden = false;
