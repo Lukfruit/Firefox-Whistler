@@ -16,7 +16,7 @@
   "permissions": ["alarms", "notifications", "storage"],
   "host_permissions": ["*://*/*"],
   "background": {
-    "scripts": ["background.js", "focusUi.js"],
+    "scripts": ["background.js"],
     "type": "module"
   },
   "action": {
