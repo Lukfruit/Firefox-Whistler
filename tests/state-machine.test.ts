@@ -82,10 +82,15 @@ describe("deadlines", () => {
     expect(inactivityDeadlines({ ...DEFAULT_SETTINGS, warningLeadMs: 0 }, START).warningAt).toBeNull();
   });
 
-  it("uses custom or reason-specific inherited repeats", () => {
-    expect(repeatDelay(DEFAULT_SETTINGS, "away")).toBeNull();
-    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatEnabled: true }, "away")).toBe(30_000);
-    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatEnabled: true }, "inactivity")).toBe(300_000);
-    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatEnabled: true, repeatPeriodMs: 42_000 }, "away")).toBe(42_000);
+  it("uses the default custom repeat period", () => {
+    expect(repeatDelay(DEFAULT_SETTINGS, "away")).toBe(180_000);
+    expect(repeatDelay(DEFAULT_SETTINGS, "inactivity")).toBe(180_000);
+  });
+
+  it("supports disabling repeats or inheriting the inactivity threshold", () => {
+    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatEnabled: false }, "away")).toBeNull();
+    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatPeriodMs: null }, "away")).toBe(300_000);
+    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatPeriodMs: null }, "inactivity")).toBe(300_000);
+    expect(repeatDelay({ ...DEFAULT_SETTINGS, repeatPeriodMs: 42_000 }, "away")).toBe(42_000);
   });
 });
