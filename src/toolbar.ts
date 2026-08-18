@@ -66,6 +66,7 @@ async function getSnapshot(): Promise<StateSnapshot> {
 
 function renderFocusStarted(current: FocusSession): void {
   document.title = "Focusing — Whistler";
+  document.body.classList.add("focus-confirmation");
   message.hidden = true;
   focusPage.hidden = true;
   actions.hidden = true;
@@ -95,6 +96,7 @@ function scheduleFocusConfirmationClose(): void {
 }
 
 function renderAway(current: FocusSession): void {
+  document.body.classList.remove("focus-confirmation");
   document.title = "Return to your focus site — Whistler";
   message.hidden = false;
   focusPage.hidden = false;
