@@ -17,23 +17,15 @@ const ALERT_NOTIFICATION_ID = "whistler-alert";
 const CLOSED_NOTIFICATION_ID = "whistler-tab-closed";
 const UNSUPPORTED_NOTIFICATION_ID = "whistler-unsupported";
 const ALERT_PAGE_URL = browser.runtime.getURL("alert.html");
-const AWAY_POPUP_URL = `${ALERT_PAGE_URL}?mode=away`;
-const FOCUS_START_POPUP_URL = `${ALERT_PAGE_URL}?mode=focus-start`;
-const FOCUS_START_POPUP_MS = 1000;
 
 let session: FocusSession | null = null;
 let settings: WhistlerSettings;
 let initialization: Promise<void> | null = null;
-let focusStartPopupGeneration: string | null = null;
 
 void initialize();
 
 browser.runtime.onInstalled.addListener(() => {
   void ensureSettingsStored();
-});
-
-browser.action.onClicked.addListener((tab) => {
-  void toggleFocus(tab.id);
 });
 
 browser.tabs.onActivated.addListener(() => {
@@ -84,6 +76,8 @@ browser.runtime.onMessage.addListener((message: RuntimeRequest, sender) => {
     case "presence:yes":
       void confirmPresence();
       return undefined;
+    case "focus:start":
+      return startFocusingCurrentTab();
     case "focus:return":
       void returnToFocus();
       return undefined;
@@ -127,13 +121,14 @@ async function ensureSettingsStored(): Promise<void> {
   if (!stored.settings) await browser.storage.local.set({ settings: await getSettings() });
 }
 
-async function toggleFocus(tabId?: number): Promise<void> {
+async function startFocusingCurrentTab(): Promise<void> {
   await initialize();
-  if (session) {
-    await stopFocusing();
-    return;
-  }
+  if (session) return;
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  await startFocusing(tab?.id);
+}
 
+async function startFocusing(tabId?: number): Promise<void> {
   if (tabId === undefined) return;
   const tab = await safeGetTab(tabId);
   if (!tab) return;
@@ -168,27 +163,8 @@ async function toggleFocus(tabId?: number): Promise<void> {
     audible: tab.audible === true,
     muted: tab.mutedInfo?.muted === true
   };
-
-  await showFocusStartedPopup(session.generation);
   await persistAndPublish();
   await reconfigureTimers();
-}
-
-async function showFocusStartedPopup(generation: string): Promise<void> {
-  focusStartPopupGeneration = generation;
-  await setToolbarState();
-
-  try {
-    await browser.action.openPopup();
-  } catch {
-    // Firefox can reject this if the initiating user gesture is no longer active.
-  }
-
-  setTimeout(() => {
-    if (focusStartPopupGeneration !== generation) return;
-    focusStartPopupGeneration = null;
-    void setToolbarState();
-  }, FOCUS_START_POPUP_MS);
 }
 
 async function handleTrackedTabUpdate(
@@ -451,7 +427,6 @@ async function stopFocusing(): Promise<void> {
   if (!session) return;
   const actionWindowId = session.actionWindowId;
   session = null;
-  focusStartPopupGeneration = null;
   await clearWhistlerAlarms();
   await browser.notifications.clear(ALERT_NOTIFICATION_ID);
   await browser.notifications.clear(CLOSED_NOTIFICATION_ID);
@@ -503,13 +478,6 @@ async function setToolbarState(): Promise<void> {
   await browser.action.setTitle({
     title: session ? `Stop focusing on ${session.focusSite}` : "Start focusing with Whistler"
   });
-
-  const popup = session && focusStartPopupGeneration === session.generation
-    ? FOCUS_START_POPUP_URL
-    : session?.state === "away"
-      ? AWAY_POPUP_URL
-      : "";
-  await browser.action.setPopup({ popup });
 }
 
 async function broadcast(message: RuntimeBroadcast): Promise<void> {
