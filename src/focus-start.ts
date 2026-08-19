@@ -6,8 +6,6 @@ const TOOLBAR_PORT_NAME = "whistler-toolbar";
 const FOCUS_CONFIRMATION_MS = 2000;
 const FOCUS_FADE_MS = 450;
 const FOCUS_LABEL = "Focusing: ";
-const FOCUS_TITLE_CHAR_BUDGET = 14;
-const HOSTNAME_VIEWPORT_CHARS = Math.max(1, FOCUS_TITLE_CHAR_BUDGET - FOCUS_LABEL.length);
 
 const toolbarPort = browser.runtime.connect({ name: TOOLBAR_PORT_NAME });
 window.addEventListener("pagehide", () => toolbarPort.disconnect(), { once: true });
@@ -32,8 +30,17 @@ async function initialize(): Promise<void> {
     return;
   }
 
+  title.style.display = "flex";
+  title.style.alignItems = "baseline";
+  title.style.minWidth = "0";
+  title.style.overflow = "hidden";
+
+  const label = document.createElement("span");
+  label.textContent = FOCUS_LABEL;
+  label.style.flex = "0 0 auto";
+
   title.replaceChildren(
-    document.createTextNode(FOCUS_LABEL),
+    label,
     scrollingHostname(displayHost(session.focusUrl, session.focusSite))
   );
   scheduleClose();
@@ -70,9 +77,9 @@ function scheduleClose(): void {
 
 function scrollingHostname(hostname: string): HTMLElement {
   const viewport = document.createElement("span");
-  viewport.style.display = "inline-block";
-  viewport.style.width = `${HOSTNAME_VIEWPORT_CHARS}ch`;
-  viewport.style.maxWidth = `${HOSTNAME_VIEWPORT_CHARS}ch`;
+  viewport.style.display = "block";
+  viewport.style.flex = "1 1 auto";
+  viewport.style.minWidth = "0";
   viewport.style.overflow = "hidden";
   viewport.style.whiteSpace = "nowrap";
   viewport.style.verticalAlign = "bottom";
