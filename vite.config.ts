@@ -12,12 +12,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(import.meta.dirname, "src/background.ts"),
-        popupState: resolve(import.meta.dirname, "src/popup-state.ts"),
         content: resolve(import.meta.dirname, "src/content.ts"),
         options: resolve(import.meta.dirname, "src/options.html"),
         alert: resolve(import.meta.dirname, "src/alert.html"),
         focusStart: resolve(import.meta.dirname, "src/focus-start.html"),
-        focusStop: resolve(import.meta.dirname, "src/focus-stop.html"),
         awayToolbar: resolve(import.meta.dirname, "src/away-toolbar.html")
       },
       output: {

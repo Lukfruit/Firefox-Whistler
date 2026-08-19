@@ -18,6 +18,8 @@ const CLOSED_NOTIFICATION_ID = "whistler-tab-closed";
 const UNSUPPORTED_NOTIFICATION_ID = "whistler-unsupported";
 const ALERT_PAGE_URL = browser.runtime.getURL("alert.html");
 const TOOLBAR_PORT_NAME = "whistler-toolbar";
+const FOCUS_START_POPUP = "focus-start.html";
+const AWAY_POPUP = "away-toolbar.html";
 
 let session: FocusSession | null = null;
 let settings: WhistlerSettings;
@@ -28,6 +30,10 @@ void initialize();
 
 browser.runtime.onInstalled.addListener(() => {
   void ensureSettingsStored();
+});
+
+browser.action.onClicked.addListener(() => {
+  void stopFocusing();
 });
 
 browser.tabs.onActivated.addListener(() => {
@@ -75,7 +81,9 @@ browser.runtime.onConnect.addListener((port) => {
   toolbarInteractionCount += 1;
   port.onDisconnect.addListener(() => {
     toolbarInteractionCount = Math.max(0, toolbarInteractionCount - 1);
-    if (toolbarInteractionCount === 0) void reconcileFocusContext();
+    if (toolbarInteractionCount !== 0) return;
+    void syncActionPopup();
+    void reconcileFocusContext();
   });
 });
 
@@ -93,8 +101,7 @@ browser.runtime.onMessage.addListener((message: RuntimeRequest, sender) => {
       void returnToFocus();
       return undefined;
     case "focus:stop":
-      void stopFocusing();
-      return undefined;
+      return stopFocusing();
     case "focus:reopen":
       void reopenFocusTab();
       return undefined;
@@ -438,12 +445,15 @@ async function stopFocusing(): Promise<void> {
   if (!session) return;
   const actionWindowId = session.actionWindowId;
   session = null;
+
+  // The visual toggle is immediate and derives only from whether a session exists.
+  await setToolbarState();
+  await browser.storage.session.remove(SESSION_KEY);
+
   await clearWhistlerAlarms();
   await browser.notifications.clear(ALERT_NOTIFICATION_ID);
   await browser.notifications.clear(CLOSED_NOTIFICATION_ID);
   await stopAudio();
-  await browser.storage.session.remove(SESSION_KEY);
-  await setToolbarState();
   await broadcast({ type: "state:changed", session: null });
   if (actionWindowId !== undefined) await safeRemoveWindow(actionWindowId);
 }
@@ -489,6 +499,17 @@ async function setToolbarState(): Promise<void> {
   await browser.action.setTitle({
     title: session ? `Stop focusing on ${session.focusSite}` : "Start focusing with Whistler"
   });
+  if (toolbarInteractionCount === 0) await syncActionPopup();
+}
+
+async function syncActionPopup(): Promise<void> {
+  let popup = FOCUS_START_POPUP;
+  if (session) {
+    popup = session.state === "away" || session.state === "alerting" && session.reason === "away"
+      ? AWAY_POPUP
+      : "";
+  }
+  await browser.action.setPopup({ popup });
 }
 
 async function broadcast(message: RuntimeBroadcast): Promise<void> {
