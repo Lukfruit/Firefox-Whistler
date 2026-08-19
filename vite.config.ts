@@ -17,6 +17,7 @@ export default defineConfig({
         options: resolve(import.meta.dirname, "src/options.html"),
         alert: resolve(import.meta.dirname, "src/alert.html"),
         focusStart: resolve(import.meta.dirname, "src/focus-start.html"),
+        focusStop: resolve(import.meta.dirname, "src/focus-stop.html"),
         awayToolbar: resolve(import.meta.dirname, "src/away-toolbar.html")
       },
       output: {
