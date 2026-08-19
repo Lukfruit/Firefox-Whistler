@@ -1,10 +1,13 @@
 import "./alert.css";
 import { displayHost } from "./core/site";
-import type { RuntimeRequest, StateSnapshot } from "./types";
+import type { FocusSession, RuntimeRequest, StateSnapshot } from "./types";
 
 const TOOLBAR_PORT_NAME = "whistler-toolbar";
 const FOCUS_CONFIRMATION_MS = 2000;
 const FOCUS_FADE_MS = 450;
+const FOCUS_LABEL = "Focusing: ";
+const FOCUS_TITLE_CHAR_BUDGET = 14;
+const HOSTNAME_VIEWPORT_CHARS = Math.max(1, FOCUS_TITLE_CHAR_BUDGET - FOCUS_LABEL.length);
 
 const toolbarPort = browser.runtime.connect({ name: TOOLBAR_PORT_NAME });
 window.addEventListener("pagehide", () => toolbarPort.disconnect(), { once: true });
@@ -14,8 +17,15 @@ const title = element<HTMLElement>("focus-title");
 void initialize();
 
 async function initialize(): Promise<void> {
+  const existing = await getSnapshot();
+  if (isActiveFocus(existing.session)) {
+    await browser.runtime.sendMessage({ type: "focus:stop" } satisfies RuntimeRequest);
+    window.close();
+    return;
+  }
+
   await browser.runtime.sendMessage({ type: "focus:start" } satisfies RuntimeRequest);
-  const snapshot = await browser.runtime.sendMessage({ type: "state:get" } satisfies RuntimeRequest) as StateSnapshot;
+  const snapshot = await getSnapshot();
   const session = snapshot.session;
   if (!session) {
     window.close();
@@ -23,10 +33,20 @@ async function initialize(): Promise<void> {
   }
 
   title.replaceChildren(
-    document.createTextNode("Focusing: "),
+    document.createTextNode(FOCUS_LABEL),
     scrollingHostname(displayHost(session.focusUrl, session.focusSite))
   );
   scheduleClose();
+}
+
+async function getSnapshot(): Promise<StateSnapshot> {
+  return browser.runtime.sendMessage({ type: "state:get" } satisfies RuntimeRequest) as Promise<StateSnapshot>;
+}
+
+function isActiveFocus(session: FocusSession | null): boolean {
+  return session?.state === "tracking"
+    || session?.state === "inactivity-warning"
+    || session?.state === "alerting" && session.reason === "inactivity";
 }
 
 function scheduleClose(): void {
@@ -51,7 +71,8 @@ function scheduleClose(): void {
 function scrollingHostname(hostname: string): HTMLElement {
   const viewport = document.createElement("span");
   viewport.style.display = "inline-block";
-  viewport.style.maxWidth = "14ch";
+  viewport.style.width = `${HOSTNAME_VIEWPORT_CHARS}ch`;
+  viewport.style.maxWidth = `${HOSTNAME_VIEWPORT_CHARS}ch`;
   viewport.style.overflow = "hidden";
   viewport.style.whiteSpace = "nowrap";
   viewport.style.verticalAlign = "bottom";

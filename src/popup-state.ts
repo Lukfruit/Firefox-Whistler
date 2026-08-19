@@ -1,8 +1,9 @@
-import type { FocusSession, RuntimeRequest } from "./types";
+import type { FocusSession } from "./types";
 
 const SESSION_KEY = "focusSession";
 const TOOLBAR_PORT_NAME = "whistler-toolbar";
 const FOCUS_START_POPUP = "focus-start.html";
+const FOCUS_STOP_POPUP = "focus-stop.html";
 const AWAY_POPUP = "away-toolbar.html";
 
 let toolbarInteractionCount = 0;
@@ -26,10 +27,6 @@ browser.runtime.onConnect.addListener((port) => {
   });
 });
 
-browser.action.onClicked.addListener(() => {
-  void browser.runtime.sendMessage({ type: "focus:stop" } satisfies RuntimeRequest);
-});
-
 function requestPopupSync(): void {
   if (toolbarInteractionCount > 0) {
     popupSyncPending = true;
@@ -47,7 +44,7 @@ async function syncPopup(): Promise<void> {
 function popupFor(session: FocusSession | null): string {
   if (!session) return FOCUS_START_POPUP;
   if (session.state === "away" || session.state === "alerting" && session.reason === "away") return AWAY_POPUP;
-  return "";
+  return FOCUS_STOP_POPUP;
 }
 
 function isSession(value: unknown): value is FocusSession {
